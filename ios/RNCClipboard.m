@@ -4,6 +4,7 @@
 #import <UIKit/UIKit.h>
 #import <React/RCTBridge.h>
 #import <React/RCTEventDispatcher.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
 
 @implementation RNCClipboard
@@ -25,7 +26,15 @@ RCT_EXPORT_METHOD(getString:(RCTPromiseResolveBlock)resolve
                   reject:(__unused RCTPromiseRejectBlock)reject)
 {
   UIPasteboard *clipboard = [UIPasteboard generalPasteboard];
-  resolve((clipboard.string ? : @""));
+  NSString* clipData = clipboard.string ? : nil;
+  if(!clipData) {
+    NSData* pasteData = [clipboard dataForPasteboardType:(NSString*)kUTTypeJPEG];
+    if(pasteData) {
+        clipData = [pasteData base64EncodedStringWithOptions:0];
+        clipData = [@"data:image/jpeg;base64," stringByAppendingString:clipData];
+    }
+  }
+  resolve(clipData);
 }
 
 @end
