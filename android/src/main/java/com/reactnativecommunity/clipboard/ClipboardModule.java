@@ -10,6 +10,9 @@ package com.reactnativecommunity.clipboard;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 import android.content.Context;
+import android.webkit.MimeTypeMap;
+import android.net.Uri;
+import java.net.URL;
 
 import com.facebook.react.bridge.ContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -35,6 +38,59 @@ public class ClipboardModule extends ContextBaseJavaModule {
 
   private ClipboardManager getClipboardService() {
     return (ClipboardManager) getContext().getSystemService(getContext().CLIPBOARD_SERVICE);
+  }
+
+
+  @ReactMethod
+  public void hasImage(Promise promise) {
+    try {
+      ClipboardManager clipboard = getClipboardService();
+      ClipData clipData = clipboard.getPrimaryClip();
+      if (clipData != null && clipData.getItemCount() >= 1) {
+        ClipData.Item firstItem = clipboard.getPrimaryClip().getItemAt(0);
+        String clipText = firstItem.getText().toString();
+        if(clipText != null && clipText.length() > 0) {
+          if(clipText.startsWith("data:image/")) {
+            promise.resolve("image-encoded");
+          } else {
+            try {
+                new URL(clipText);
+            } catch (Exception e) {
+              promise.resolve("");
+              return;
+            }
+            if(clipText.endsWith(".html") || clipText.endsWith(".txt")) {
+              promise.resolve("");
+              return;
+            }
+            String ext = MimeTypeMap.getFileExtensionFromUrl(clipText).toLowerCase();
+            if(ext == "jpg" || ext == "png" || ext == "gif" || ext == "tiff") {
+              promise.resolve("image");
+              return;
+            }
+            if(clipText.startsWith("http")) {
+              promise.resolve("web-url");
+            } else {
+              promise.resolve("image");
+            }
+          }
+        } else {
+          Uri uri = firstItem.getUri();
+          if(uri != null && uri.toString().length() > 0) {
+            String ext = MimeTypeMap.getFileExtensionFromUrl(uri.toString()).toLowerCase();
+            if(ext == "jpg" || ext == "png" || ext == "gif" || ext == "tiff") {
+              promise.resolve("image");
+              return;
+            }
+          }
+          promise.resolve("");
+        }
+      } else {
+        promise.resolve("");
+      }
+    } catch (Exception e) {
+      promise.reject(e);
+    }
   }
 
   @ReactMethod

@@ -5,6 +5,13 @@ import NativeClipboard from './NativeClipboard';
  */
 export const Clipboard = {
   /**
+   * Get type of image data in clipboard, this method returns a `Promise`.
+   * ```
+   */
+  hasImage(): Promise<string> {
+    return NativeClipboard.hasImage();
+  },
+  /**
    * Get content of string type, this method returns a `Promise`, so you can use following code to get clipboard content
    * ```javascript
    * async _getContent() {
